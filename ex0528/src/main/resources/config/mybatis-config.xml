@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-config.dtd">
+
+
+<configuration>
+
+	<!-- 컬럼에 Null 추가 -->
+	<settings>
+		<setting name="jdbcTypeForNull" value="NULL" />
+	</settings>
+	
+	<typeAliases>
+		<typeAlias alias="Article" type="com.mycompany.myapp.vo.Article" />
+		<typeAlias alias="User" type="com.mycompany.myapp.vo.User" />
+		<typeAlias alias="PageVO" type="com.mycompany.myapp.vo.PageVO" />
+		<typeAlias alias="Reply" type="com.mycompany.myapp.vo.Reply" />
+		<typeAlias alias="View" type="com.mycompany.myapp.vo.View" />
+		<typeAlias alias="FileLoad" type="com.mycompany.myapp.vo.FileLoad" />
+	</typeAliases>
+
+	<!-- mapper파일의 경로 -->
+	<mappers>
+		<mapper resource="mapper/articles.xml" />
+		<mapper resource="mapper/users.xml" />
+		<mapper resource="mapper/replies.xml" />
+		<mapper resource="mapper/views.xml" />
+		<mapper resource="mapper/files.xml" />
+	</mappers>
+
+</configuration>
