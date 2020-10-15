@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="replies">
+	<insert id="replyRegister" parameterType="Reply" useGeneratedKeys="false">
+		INSERT INTO replies(articleNo, content, writer, regdate)
+		VALUES(#{articleNo}, #{content}, #{writer}, current_timestamp())
+	</insert>
+	
+	<select id="replyList" parameterType="pageVO" resultType="reply">
+		SELECT a.*
+		FROM(SELECT @rownum:=@rownum+1 num, b.*
+			FROM(SELECT no, articleNo, content, writer, regdate
+				FROM replies 
+				WHERE (@rownum:=0)=0
+				AND articleNo = #{articleNo}
+				ORDER BY 1 DESC) b
+			)a
+		WHERE a.num BETWEEN #{start} AND #{end}
+	</select>
+	
+	<select id="replyTotalCnt" parameterType="int" resultType="int">
+		SELECT COUNT(*)
+		FROM replies
+		WHERE articleNo = #{articleNo}
+	</select>
+	
+	<delete id="deleteReply" parameterType="int">
+		DELETE
+		FROM replies
+		WHERE articleNo = #{articleNo}
+	</delete>
+	
+	<select id="myReply" parameterType="String" resultType="Reply">
+		SELECT	no
+				,content
+				, regdate
+				, (
+						SELECT	TITLE
+						FROM	articles
+						WHERE 	NO = ARTICLENO
+					) as articleTitle
+		FROM	replies
+		WHERE	WRITER = #{userId};
+	
+	</select>
+</mapper>
