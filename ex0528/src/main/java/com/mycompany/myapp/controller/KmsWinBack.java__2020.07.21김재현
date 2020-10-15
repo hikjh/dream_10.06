@@ -1,0 +1,132 @@
+package com.mycompany.myapp.controller;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+
+public class KmsWinBack {
+	
+	static String date = "";
+	
+	
+	public static void main(String[] args) {
+		//1. (KMI) 인증서와 개인키 개수를 조회한다. -> count 수  where 
+		int count = getKmiCount(date);
+		
+		//loop count 수만큼 
+		
+		for (int i = 1 ; i < count+1 ; i++ ) {
+			//2. (KMI) 사용자 DN을 조회한다.
+			String userDn = getUserDn (i, date);
+			
+			//3. (KMI) 인증서와 개인키를 가져온다. -> pkcs12
+			/*
+				SELECT	user_cert
+				FROM	kmi_cert 
+				WHERE 	user_dn = userDn 
+			*/
+			//4. pkcs12 -> 형변환 개인키, 인증서를 뺴냄
+			//5-1. (KMS) 개인키 확인 
+			//5-2. (KMS) 개인키가 없으면 개인키를 저장.
+			//6-1. (KMS) 인증서확인
+			//6-2. (KMS) 인증서가 없으면 인증서를 넣어준다.
+		}
+	}
+	
+	/**
+	 * 케이사인 KMI에서 count 조회 
+	 * @return 개인키 개수 
+	 */
+	private static int getKmiCount(String date) {
+		// Get Total Count
+		int result = 0;
+		
+		Connection conn = null;
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		
+		String url = "jdbc:mysql://127.0.0.1:3306/test1?serverTimezone=UTC";
+		String id = "kjh";
+		String pw = "1234";
+		
+		try {
+			
+			Class.forName("com.mysql.cj.jdbc.Driver");
+			conn = DriverManager.getConnection(url, id, pw);
+			
+			// test DB
+			String sql = "SELECT COUNT(*) FROM articles WHERE regdate=?";
+			// kmi_cert 
+			// String sql = "SELECT COUNT(*) FROM kmi_cert WHERE insert_date=?";
+			
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, date);
+			
+			rs = pstmt.executeQuery();
+			if(rs.next()) {
+				result = rs.getInt(1);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} 
+		
+		return result;
+	}
+	
+	/**
+	 * 케이사인 KMI에서 UserDn 조회
+	 * @param index 
+	 * @return UserDn
+	 */
+	private static String getUserDn(int index, String date) {
+		// Get User DN
+		String rownum = "";
+		String userDn = "";
+		String regdate = "";
+		
+		Connection conn = null;
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		
+		String url = "jdbc:mysql://127.0.0.1:3306/test1?serverTimezone=UTC";
+		String id = "kjh";
+		String pw = "1234";
+		
+		try {
+			
+			Class.forName("com.mysql.cj.jdbc.Driver");
+			conn = DriverManager.getConnection(url, id, pw);
+			
+			// test DB
+			String sql = "SELECT b.rownum, title, regdate FROM(SELECT @rownum:=@rownum+1 as rownum, title, regdate FROM(SELECT title, regdate FROM articles WHERE (@rownum:=0)=0) a WHERE regdate =?) b WHERE rownum=?";
+			// kmi_cert 
+			//String sql = "SELECT b.rownum, user_dn, insert_date FROM(SELECT @rownum:=@rownum+1 as rownum, user_dn, insert_date FROM(SELECT user_dn, insert_date FROM kmi_cert WHERE (@rownum:=0)=0) a WHERE insert_date =?) b WHERE rownum=?";
+			
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, date);
+			pstmt.setInt(2, index);
+			
+			rs = pstmt.executeQuery();
+
+			while(rs.next()) {
+				
+				rownum = rs.getString("rownum");
+				userDn = rs.getString("title");
+				regdate = rs.getString("regdate"); 
+				//userDn = rs.getString("user_dn");
+				//insertDate = rs.getString("insert_date"); 
+				
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			try {rs.close();} catch (Exception rse) {}
+			try {pstmt.close();} catch (Exception pstmte) {}
+			try {conn.close();} catch (Exception conne) {}
+		}
+		
+		return userDn;
+	}
+	
+}

@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="articles">
+	<insert id="registerArticle" parameterType="Article">
+		INSERT INTO articles(title, content, writer, regdate)
+		VALUES (#{title}, #{content}, #{writer}, current_timestamp())
+		<selectKey resultType="int" keyProperty="no" order="AFTER">
+			 <!--마지막에 INSERT된 Auto_Increment 값 return -->
+			SELECT LAST_INSERT_ID()
+		</selectKey>
+	</insert>
+	
+	<!-- 게시글 조회 -->
+	<select id="articleList" parameterType="PageVO" resultType="Article">
+		<!-- 
+		SELECT a.*
+		FROM(SELECT @rownum:=@rownum+1 num, b.*
+			FROM(SELECT no, title, content, writer, regdate
+				FROM articles 
+				WHERE (@rownum:=0)=0
+				ORDER BY 1 DESC) b
+			)a
+		WHERE a.num BETWEEN #{start} AND #{end}
+		-->
+		SELECT a.*
+		FROM
+		(
+			SELECT @rownum:=@rownum+1 num, b.*
+			FROM
+			(
+				SELECT NO
+				, TITLE
+				, CONTENT
+				, WRITER
+				, REGDATE
+				, ( SELECT COUNT(*)
+					FROM views 
+					WHERE articleNum = a.no) as view
+				FROM articles a
+				WHERE (@rownum:=0)=0
+				<if test = "searchType != null and searchType != ''">
+					<!-- 
+						NumberFormatException Error 
+						'T'를 사용하면 char형으로 인식 -> 문자의 코드값 저장
+						해결방법
+						1. &quot;T&quot;
+						2. 'W'.toString()
+						3. 'searchType == "W"'
+					-->
+					<if test = 'searchType == "T"'>
+						<!--
+							like 사용할때
+							MySQL: AND title like CONCAT('%',#{search},'%')
+							ORACLE: AND title like '%' || #{title} || '%'
+						 -->
+						AND title like CONCAT('%',#{search},'%')
+					</if>
+					<if test = 'searchType == "W"'>
+						AND writer like CONCAT('%',#{search},'%')
+					</if>
+				</if>
+				ORDER BY 1 DESC
+			) b
+		)a
+		WHERE a.num BETWEEN #{start} AND #{end}
+	</select>
+	
+	<!-- 전체 게시글 개수 -->
+	<select id="totalArticleList" parameterType="PageVO" resultType="int">
+		SELECT COUNT(*)
+		FROM articles
+		<if test = "searchType == &quot;T&quot;">
+			WHERE title like CONCAT('%',#{search},'%')
+		</if>
+		<if test = "searchType == 'W'.toString()">
+			WHERE writer like CONCAT('%',#{search},'%')
+		</if>
+	</select>
+	
+	<!-- 게시글 상세 -->
+	<select id="articleDetail" parameterType="int" resultType="Article">
+		SELECT no
+			   , title
+			   , content
+			   , writer
+			   , regdate
+			   , modifyDate
+			   , (
+			   		SELECT	COUNT(*)
+			   		FROM	views
+			   		WHERE 	articleNum = a.no
+			   		) as view
+		FROM articles a
+		WHERE no = #{no}
+	</select>
+	
+	<!-- 게시글 삭제 -->
+	<delete id="deleteArticle" parameterType="int">
+		DELETE
+		FROM articles
+		WHERE no = #{articleNo}
+	</delete>
+	
+	<!-- 게시글 수정 -->
+	<update id="updateArticle" parameterType="Article">
+		UPDATE articles
+		SET title = #{title}, CONTENT = #{content}, MODIFYDATE = current_timestamp()
+		WHERE no = #{no}
+	</update>
+	
+	<select id="myArticle" parameterType="String" resultType="Article">
+		SELECT	NO
+				, TITLE
+				, CONTENT
+				, REGDATE
+				, MODIFYDATE
+		FROM 	articles
+		WHERE 	WRITER = #{userId}
+		ORDER BY 1 DESC;
+	</select>
+</mapper>
