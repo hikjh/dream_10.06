@@ -64,12 +64,13 @@
 		</dependency>
 		
 		<!-- Spring-jdbc -->
-        <!-- https://mvnrepository.com/artifact/org.springframework/spring-jdbc -->
+        <!-- https://mvnrepository.com/artifact/org.springframework/spring-jdbc 
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-jdbc</artifactId>
             <version>${org.springframework-version}</version>
         </dependency>
+        -->
         <!-- file upload -->
 		<dependency>
 		    <groupId>commons-fileupload</groupId>
